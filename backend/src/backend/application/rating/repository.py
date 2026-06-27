@@ -1,0 +1,19 @@
+from typing import Protocol
+from uuid import UUID
+
+from src.backend.domain.rating.entity import Rating
+
+
+class RatingRepository(Protocol):
+
+    async def get_by_item_and_user(self, item_id: UUID, user_id: UUID) -> Rating | None: ...
+
+    async def get_avg_by_item(self, item_id: UUID) -> float | None: ...
+
+    async def count_by_item(self, item_id: UUID) -> int: ...
+
+    async def create(self, rating: Rating) -> Rating: ...
+
+    async def update(self, rating: Rating) -> None: ...
+
+    async def delete(self, rating: Rating) -> None: ...

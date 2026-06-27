@@ -1,0 +1,7 @@
+from dataclasses import dataclass
+from uuid import UUID
+
+
+@dataclass
+class DeleteCategoryCommand:
+    category_id: UUID

@@ -1,0 +1,32 @@
+apiVersion: 1
+
+# NOTE: chatid must be a hardcoded string literal in quotes.
+# Grafana's YAML env-var substitution produces a bare number for ${TELEGRAM_CHAT_ID},
+# which crashes the Telegram integration (expects string type).
+# Replace "YOUR_CHAT_ID_HERE" with your real Telegram chat ID (as a quoted string).
+# Get your chat ID: message @userinfobot on Telegram, or visit:
+#   https://api.telegram.org/bot<TOKEN>/getUpdates → result[0].message.chat.id
+
+contactPoints:
+  - orgId: 1
+    name: Telegram Alerts
+    receivers:
+      - uid: tg-coremarket
+        type: telegram
+        settings:
+          bottoken: ${TELEGRAM_BOT_TOKEN}
+          chatid: "YOUR_CHAT_ID_HERE"
+          message: |
+            🚨 {{ .CommonLabels.alertname }}
+
+            {{ range .Alerts -}}
+            Status: {{ .Status | toUpper }}
+            {{ if .Annotations.summary -}}
+            {{ .Annotations.summary }}
+            {{- end }}
+            {{ if .Annotations.description -}}
+            {{ .Annotations.description }}
+            {{- end }}
+            Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+            {{ end }}
+        disableResolveMessage: false

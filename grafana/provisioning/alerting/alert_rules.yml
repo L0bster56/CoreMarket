@@ -1,0 +1,301 @@
+apiVersion: 1
+
+# Alert rules evaluated by Grafana Unified Alerting.
+# Datasource UIDs must match grafana/provisioning/datasources/loki.yml:
+#   prometheus → uid: prometheus
+#   loki       → uid: loki
+#
+# Folder "CoreMarket" is provisioned by grafana/provisioning/dashboards/dashboards.yml.
+
+groups:
+  - orgId: 1
+    name: CoreMarket Production Alerts
+    folder: CoreMarket
+    interval: 1m
+    rules:
+
+      # ── 1. HTTP 5xx Rate ───────────────────────────────────────────────────────
+      # Fires when the backend returns more than 0.05 5xx responses per second
+      # (≈ 3+ errors/minute) for a sustained 5 minutes.
+      - uid: cm-http-5xx-rate
+        title: "[CoreMarket] HTTP 5xx Error Rate"
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            queryType: ""
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: 'sum(rate(coremarket_http_requests_total{status_code=~"5.."}[5m]))'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0.05
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              refId: B
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "CoreMarket backend 5xx spike"
+          description: "HTTP error rate exceeded 0.05 req/s for 5+ minutes"
+        labels:
+          severity: critical
+          service: backend
+        isPaused: false
+
+      # ── 2. Celery Task Failures ────────────────────────────────────────────────
+      # Fires when any Celery task fails at least once in 5 minutes.
+      - uid: cm-celery-task-failures
+        title: "[CoreMarket] Celery Task Failures"
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            queryType: ""
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: 'sum(increase(coremarket_celery_tasks_total{status="failure"}[5m]))'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              refId: B
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: "Celery task failure in CoreMarket"
+          description: "One or more Celery tasks failed in the last 5 minutes"
+        labels:
+          severity: warning
+          service: celery
+        isPaused: false
+
+      # ── 3. Backend ERROR Log Spike (Loki) ─────────────────────────────────────
+      # Fires when backend produces more than 5 ERROR-level log lines in 5 minutes.
+      # Uses JSON log parsing: { "level": "error" } field from the structured logger.
+      - uid: cm-loki-error-spike
+        title: "[CoreMarket] Backend ERROR Log Spike"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: loki
+            queryType: range
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              datasource:
+                type: loki
+                uid: loki
+              expr: 'sum(count_over_time({compose_service="backend"} | json | level =~ "(?i)error" [5m]))'
+              hide: false
+              queryType: range
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              hide: false
+              reducer: last
+              refId: B
+              settings:
+                mode: ""
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 5
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: B
+              hide: false
+              refId: C
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "High ERROR log count in CoreMarket backend"
+          description: "More than 5 error-level log entries in the last 5 minutes"
+        labels:
+          severity: warning
+          service: backend
+        isPaused: false
+
+      # ── 4. Backend Down ────────────────────────────────────────────────────────
+      # Fires when Prometheus cannot reach the backend /metrics endpoint.
+      - uid: cm-backend-down
+        title: "[CoreMarket] Backend Unreachable"
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            queryType: ""
+            relativeTimeRange:
+              from: 120
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: 'up{job="coremarket-backend"}'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 1
+                    type: lt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              refId: B
+              type: classic_conditions
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: "CoreMarket backend is unreachable"
+          description: "Prometheus /metrics scrape for coremarket-backend has been failing for 2+ minutes"
+        labels:
+          severity: critical
+          service: backend
+        isPaused: false
+
+      # ── 5. Celery Worker Down ──────────────────────────────────────────────────
+      # Fires when all Celery active task gauges drop to zero for 10 minutes
+      # while tasks are still being submitted (possible worker crash).
+      # Note: this is a heuristic — also verify via Flower (port 5555).
+      - uid: cm-high-request-latency
+        title: "[CoreMarket] High API Latency (p95)"
+        condition: B
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            queryType: ""
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              expr: 'histogram_quantile(0.95, sum(rate(coremarket_http_request_duration_seconds_bucket[5m])) by (le))'
+              instant: true
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 2.0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - A
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              refId: B
+              type: classic_conditions
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "CoreMarket API p95 latency above 2s"
+          description: "95th-percentile request duration exceeded 2 seconds for 5+ minutes"
+        labels:
+          severity: warning
+          service: backend
+        isPaused: false

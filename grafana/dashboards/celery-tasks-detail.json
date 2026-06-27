@@ -1,0 +1,502 @@
+{
+  "uid": "celery-tasks-detail",
+  "title": "CoreMarket — Celery Tasks Detail",
+  "description": "Per-task breakdown: success/failure rates, duration histograms, retry analysis, worker activity logs. Drilldown companion to the Celery overview dashboard.",
+  "tags": ["coremarket", "celery", "prometheus", "loki"],
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "schemaVersion": 39,
+  "links": [
+    {
+      "title": "Celery Overview",
+      "type": "link",
+      "url": "/d/celery-metrics",
+      "icon": "external link",
+      "targetBlank": false
+    },
+    {
+      "title": "CoreMarket Dashboards",
+      "type": "dashboards",
+      "tags": ["coremarket"],
+      "asDropdown": true,
+      "includeVars": true,
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1, "type": "row",
+      "title": "Task Summary",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "id": 2, "type": "stat",
+      "title": "Tasks / min",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum(rate(coremarket_celery_tasks_total{status=\"success\"}[$__rate_interval])) * 60",
+        "legendFormat": "tasks/min"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [{ "color": "green", "value": null }] }
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 3, "type": "stat",
+      "title": "Failed / min",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum(rate(coremarket_celery_tasks_total{status=\"failure\"}[$__rate_interval])) * 60",
+        "legendFormat": "failures/min"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.1 },
+            { "color": "red", "value": 1 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 4, "type": "stat",
+      "title": "Retries / min",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum(rate(coremarket_celery_tasks_total{status=\"retry\"}[$__rate_interval])) * 60",
+        "legendFormat": "retries/min"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 0.05 },
+            { "color": "red", "value": 0.5 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 5, "type": "stat",
+      "title": "Failure Rate %",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum(rate(coremarket_celery_tasks_total{status=\"failure\"}[5m])) / sum(rate(coremarket_celery_tasks_total[5m])) * 100",
+        "legendFormat": "failure %"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": { "mode": "thresholds" },
+          "thresholds": { "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 2 },
+            { "color": "red", "value": 10 }
+          ]}
+        }
+      },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" }
+    },
+    {
+      "id": 10, "type": "row",
+      "title": "Per-task_name Performance",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "collapsed": false
+    },
+    {
+      "id": 11, "type": "table",
+      "title": "Task Performance — Current Window",
+      "description": "Instant snapshot: success/failure/retry rates + p50 and p95 duration per task. Sort by p95 to find slowest tasks.",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (task_name, queue) (rate(coremarket_celery_tasks_total{status=\"success\"}[5m]))",
+          "legendFormat": "{{task_name}}",
+          "instant": true,
+          "format": "table",
+          "refId": "success"
+        },
+        {
+          "expr": "sum by (task_name, queue) (rate(coremarket_celery_tasks_total{status=\"failure\"}[5m]))",
+          "legendFormat": "{{task_name}}",
+          "instant": true,
+          "format": "table",
+          "refId": "failure"
+        },
+        {
+          "expr": "sum by (task_name, queue) (rate(coremarket_celery_tasks_total{status=\"retry\"}[5m]))",
+          "legendFormat": "{{task_name}}",
+          "instant": true,
+          "format": "table",
+          "refId": "retry"
+        },
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, task_name) (rate(coremarket_celery_task_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{task_name}}",
+          "instant": true,
+          "format": "table",
+          "refId": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, task_name) (rate(coremarket_celery_task_duration_seconds_bucket[5m])))",
+          "legendFormat": "{{task_name}}",
+          "instant": true,
+          "format": "table",
+          "refId": "p95"
+        }
+      ],
+      "transformations": [
+        { "id": "merge", "options": {} },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "task_name": "Task",
+              "queue": "Queue",
+              "Value #success": "Success/s",
+              "Value #failure": "Failure/s",
+              "Value #retry": "Retry/s",
+              "Value #p50": "p50 Duration",
+              "Value #p95": "p95 Duration"
+            },
+            "excludeByName": { "Time": true }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "filterable": true },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "p50 Duration" },
+            "properties": [
+              { "id": "unit", "value": "s" },
+              {
+                "id": "thresholds",
+                "value": { "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 5 },
+                  { "color": "red", "value": 30 }
+                ]}
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p95 Duration" },
+            "properties": [
+              { "id": "unit", "value": "s" },
+              {
+                "id": "thresholds",
+                "value": { "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "yellow", "value": 10 },
+                  { "color": "red", "value": 60 }
+                ]}
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Failure/s" },
+            "properties": [
+              { "id": "unit", "value": "ops" },
+              {
+                "id": "thresholds",
+                "value": { "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 0.01 }
+                ]}
+              },
+              { "id": "custom.displayMode", "value": "color-background" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Success/s" },
+            "properties": [{ "id": "unit", "value": "ops" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Retry/s" },
+            "properties": [{ "id": "unit", "value": "ops" }]
+          }
+        ]
+      },
+      "options": { "sortBy": [{ "displayName": "p95 Duration", "desc": true }] }
+    },
+    {
+      "id": 20, "type": "row",
+      "title": "Task Rate Trends",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 },
+      "collapsed": false
+    },
+    {
+      "id": 21, "type": "timeseries",
+      "title": "Success Rate by task_name",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (task_name) (rate(coremarket_celery_tasks_total{status=\"success\"}[$__rate_interval]))",
+        "legendFormat": "{{task_name}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }
+      }
+    },
+    {
+      "id": 22, "type": "timeseries",
+      "title": "Failure + Retry Rate by task_name",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by (task_name) (rate(coremarket_celery_tasks_total{status=\"failure\"}[$__rate_interval]))",
+          "legendFormat": "fail: {{task_name}}"
+        },
+        {
+          "expr": "sum by (task_name) (rate(coremarket_celery_tasks_total{status=\"retry\"}[$__rate_interval]))",
+          "legendFormat": "retry: {{task_name}}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }
+      }
+    },
+    {
+      "id": 23, "type": "timeseries",
+      "title": "p95 Duration by task_name",
+      "description": "Highlights which tasks are slowest at the 95th percentile — the primary indicator of user-impacting latency.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, sum by (le, task_name) (rate(coremarket_celery_task_duration_seconds_bucket[$__rate_interval])))",
+        "legendFormat": "{{task_name}}"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": { "steps": [
+            { "color": "transparent", "value": null },
+            { "color": "yellow", "value": 10 },
+            { "color": "red", "value": 60 }
+          ]}
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }
+      }
+    },
+    {
+      "id": 24, "type": "timeseries",
+      "title": "p50 Duration by task_name",
+      "description": "Median task duration — use alongside p95 to detect skew from outliers.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 25 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "histogram_quantile(0.50, sum by (le, task_name) (rate(coremarket_celery_task_duration_seconds_bucket[$__rate_interval])))",
+        "legendFormat": "{{task_name}}"
+      }],
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "options": {
+        "legend": { "displayMode": "table", "placement": "right", "calcs": ["lastNotNull", "max"] }
+      }
+    },
+    {
+      "id": 30, "type": "row",
+      "title": "Celery Logs (Loki)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 },
+      "collapsed": false
+    },
+    {
+      "id": 31, "type": "logs",
+      "title": "Task Failures (level=error)",
+      "description": "Structured logs emitted when a task raises an unhandled exception. Fields: task_name, task_id, exc_type, duration_ms.",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 34 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{
+        "expr": "{compose_service=\"celery\"} | json | level=\"error\"",
+        "legendFormat": ""
+      }],
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 32, "type": "logs",
+      "title": "Task Completions (task_completed)",
+      "description": "One log line per completed task. Fields include task_name, duration_ms, retries, queue.",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 34 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{
+        "expr": "{compose_service=\"celery\"} | json | msg=\"task_completed\"",
+        "legendFormat": ""
+      }],
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 33, "type": "bargauge",
+      "title": "Error Count by task_name — Last 1h",
+      "description": "Which tasks fail most in the current window. A bar that grows means a task is retrying/crashing repeatedly.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{
+        "expr": "sum by (task_name) (count_over_time({compose_service=\"celery\"} | json | level=\"error\" | task_name=~\".+\" [1h]))",
+        "legendFormat": "{{task_name}}",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "red" }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "displayMode": "gradient",
+        "valueMode": "color"
+      }
+    },
+    {
+      "id": 34, "type": "logs",
+      "title": "Task Retries & Warnings",
+      "description": "Retry attempts logged before a task is rescheduled. Persistent entries here indicate a flaky external dependency.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{
+        "expr": "{compose_service=\"celery\"} | json | msg=\"task_retry\" or level=\"warning\"",
+        "legendFormat": ""
+      }],
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": false,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 40, "type": "row",
+      "title": "Worker Performance",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 52 },
+      "collapsed": false
+    },
+    {
+      "id": 41, "type": "timeseries",
+      "title": "Active Tasks by Queue",
+      "description": "Number of tasks currently executing per queue. A steady non-zero value means workers are busy; a spike means backlog.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 53 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "sum by (queue) (coremarket_celery_tasks_active)",
+        "legendFormat": "{{queue}}"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "fillOpacity": 20 }
+        }
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      }
+    },
+    {
+      "id": 42, "type": "logs",
+      "title": "Worker Activity Log",
+      "description": "Full log stream from celery workers. Use this to correlate task starts and completions with failures.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 53 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{
+        "expr": "{compose_service=\"celery\"} | json | msg=~\"task_started|task_completed|task_failed|task_retry\"",
+        "legendFormat": ""
+      }],
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      }
+    },
+    {
+      "id": 43, "type": "timeseries",
+      "title": "Homepage Snapshot Freshness",
+      "description": "Age of the precomputed homepage snapshot in Redis. Exceeding 600s (10 min) means Celery beat or the homepage queue is stalled.",
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 61 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{
+        "expr": "coremarket_homepage_snapshot_age_seconds",
+        "legendFormat": "snapshot age"
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "thresholdsStyle": { "mode": "area" } },
+          "thresholds": { "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 300 },
+            { "color": "red", "value": 600 }
+          ]}
+        }
+      },
+      "options": { "legend": { "displayMode": "hidden" } }
+    },
+    {
+      "id": 44, "type": "bargauge",
+      "title": "Completions by task_name — Last 1h (Loki)",
+      "description": "Loki-side count of task_completed events, independent of Prometheus. Use to cross-check metric accuracy.",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 61 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{
+        "expr": "sum by (task_name) (count_over_time({compose_service=\"celery\"} | json | msg=\"task_completed\" | task_name=~\".+\" [1h]))",
+        "legendFormat": "{{task_name}}",
+        "instant": true
+      }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "green" }
+        }
+      },
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "displayMode": "gradient"
+      }
+    }
+  ]
+}

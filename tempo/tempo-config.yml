@@ -1,0 +1,53 @@
+server:
+  http_listen_port: 3200
+  log_level: warn
+
+# ── OTLP receivers ────────────────────────────────────────────────────────────
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 0.0.0.0:4317
+        http:
+          endpoint: 0.0.0.0:4318
+
+# ── Ingestion pipeline ────────────────────────────────────────────────────────
+ingester:
+  trace_idle_period: 10s
+  max_block_duration: 5m
+
+# ── Storage — local filesystem (switch to S3/GCS for multi-replica prod) ─────
+storage:
+  trace:
+    backend: local
+    local:
+      path: /var/tempo/traces
+    wal:
+      path: /var/tempo/wal
+
+# ── Compactor — keeps disk usage bounded ─────────────────────────────────────
+compactor:
+  compaction:
+    block_retention: 72h   # keep traces for 3 days
+
+# ── Query frontend ────────────────────────────────────────────────────────────
+query_frontend:
+  search:
+    duration_slo: 5s
+    throughput_bytes_slo: 1.073741824e+09
+
+# ── Metrics-generator (service-graph + span-metrics for Grafana) ─────────────
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      project: coremarket
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
+overrides:
+  metrics_generator_processors: [service-graphs, span-metrics]

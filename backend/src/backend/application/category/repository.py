@@ -1,0 +1,23 @@
+from __future__ import annotations
+
+from typing import Protocol
+from uuid import UUID
+
+from src.backend.domain.category.entity import Category
+
+
+class CategoryRepository(Protocol):
+
+    async def get_by_id(self, category_id: UUID) -> Category | None: ...
+
+    async def get_by_slug(self, slug: str) -> Category | None: ...
+
+    async def list_all(self) -> list[Category]: ...
+
+    async def create(self, category: Category) -> Category: ...
+
+    async def update(self, category: Category) -> None: ...
+
+    async def delete(self, category: Category) -> None: ...
+
+    async def exists_slug(self, slug: str, exclude_id: UUID | None = None) -> bool: ...

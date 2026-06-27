@@ -1,0 +1,153 @@
+# ── Secrets & Environment ─────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+*.so
+
+# ── Virtual environments ───────────────────────────────────────────────────────
+.venv/
+venv/
+ENV/
+env/
+.env.bak
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+nosetests.xml
+pytest.ini
+
+# ── Node.js / Frontend ────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# ── Next.js ───────────────────────────────────────────────────────────────────
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Production builds ─────────────────────────────────────────────────────────
+dist/
+build/
+.cache/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+logs/
+*.log
+*.log.*
+log/
+
+# ── Docker volumes (if mounted locally) ───────────────────────────────────────
+postgres_data/
+minio_data/
+redis_data/
+loki_data/
+grafana_data/
+elasticsearch_data/
+prometheus_data/
+tempo_data/
+
+# ── Media / uploads (production lives in MinIO) ───────────────────────────────
+media/
+
+# ── SSL certificates ──────────────────────────────────────────────────────────
+certbot/conf/
+*.pem
+*.key
+*.crt
+*.csr
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.iml
+*.iws
+*.ipr
+
+# ── OS junk ───────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Temporary files ───────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.orig
+
+# ── Database dumps ────────────────────────────────────────────────────────────
+*.sql
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+
+# ── Coverage & profiling ──────────────────────────────────────────────────────
+.coverage*
+coverage/
+*.prof
+
+# ── Alembic ───────────────────────────────────────────────────────────────────
+# Keep migrations versioned, but skip local test databases
+
+# ── Flower persistent storage ─────────────────────────────────────────────────
+flower.db
+
+# ── Claude Code (internal AI tooling) ────────────────────────────────────────
+# CLAUDE.md project instructions ARE committed — only exclude the settings dir
+.claude/settings.json
+.claude/settings.local.json
+
+# ── Misc ──────────────────────────────────────────────────────────────────────
+.vercel
+.turbo/

@@ -1,0 +1,44 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: warn
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    backoff_config:
+      min_period: 500ms
+      max_period: 5m
+      max_retries: 10
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Full container name without leading slash → 'container' label
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: container
+
+      # Docker Compose service name → 'compose_service' label
+      # Docker Compose attaches label com.docker.compose.service to every container.
+      # In Promtail meta-labels, dots become underscores.
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: compose_service
+
+      # Docker Compose project name → 'compose_project' label
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: compose_project
+
+      # stdout / stderr
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: stream
+
+      # Static job label for easy filtering
+      - action: replace
+        replacement: docker
+        target_label: job

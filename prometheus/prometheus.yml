@@ -1,0 +1,71 @@
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  scrape_timeout:      10s
+  external_labels:
+    environment: development
+    project:     coremarket
+
+# ── Recording / alerting rules (extend as needed) ────────────────────────────
+rule_files: []
+
+scrape_configs:
+
+  # ── CoreMarket FastAPI backend ─────────────────────────────────────────────
+  - job_name: coremarket-backend
+    static_configs:
+      - targets: ['backend:8000']
+        labels:
+          service: backend
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # ── Prometheus self-monitoring ─────────────────────────────────────────────
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: prometheus
+
+  # ── Node Exporter — host OS metrics ──────────────────────────────────────
+  - job_name: node-exporter
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: node-exporter
+
+  # ── cAdvisor — Docker container metrics ──────────────────────────────────
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: cadvisor
+    scrape_interval: 15s
+    # cAdvisor exposes many high-cardinality labels; keep only what we need
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'container_(cpu_usage_seconds_total|memory_usage_bytes|memory_working_set_bytes|network_receive_bytes_total|network_transmit_bytes_total|fs_reads_bytes_total|fs_writes_bytes_total)'
+        action: keep
+      - source_labels: [container_label_com_docker_compose_service]
+        target_label: service
+
+  # ── PostgreSQL exporter ───────────────────────────────────────────────────
+  - job_name: postgres-exporter
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: postgres
+
+  # ── Redis exporter ────────────────────────────────────────────────────────
+  - job_name: redis-exporter
+    static_configs:
+      - targets: ['redis-exporter:9121']
+        labels:
+          service: redis
+
+  # ── Elasticsearch exporter ────────────────────────────────────────────────
+  - job_name: elasticsearch-exporter
+    static_configs:
+      - targets: ['elasticsearch-exporter:9114']
+        labels:
+          service: elasticsearch
