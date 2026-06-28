@@ -45,7 +45,7 @@ export async function generateStaticParams() {
     const tags = await serverGet<Tag[]>('/tags', false)
     return tags.map((t) => ({ slug: t.slug }))
   } catch {
-    return []
+    return [{ slug: '__build__' }]
   }
 }
 
@@ -53,6 +53,7 @@ export async function generateStaticParams() {
 
 export default async function TagPage({ params }: PageProps) {
   const { slug } = await params
+  if (slug === '__build__') notFound()
 
   const [tags, itemsResp] = await Promise.all([
     getAllTags(),

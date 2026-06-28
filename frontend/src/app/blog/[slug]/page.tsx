@@ -135,7 +135,7 @@ export async function generateStaticParams() {
     )
     return resp.items.map((p) => ({ slug: p.slug }))
   } catch {
-    return []
+    return [{ slug: '__build__' }]
   }
 }
 

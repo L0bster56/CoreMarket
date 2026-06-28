@@ -48,7 +48,7 @@ export async function generateStaticParams() {
     const categories = await serverGet<Category[]>('/categories', false)
     return categories.map((c) => ({ category: c.slug }))
   } catch {
-    return []
+    return [{ category: '__build__' }]
   }
 }
 
@@ -56,6 +56,7 @@ export async function generateStaticParams() {
 
 export default async function CategoryPage({ params }: PageProps) {
   const { category: slug } = await params
+  if (slug === '__build__') notFound()
 
   const categories = await getAllCategories()
   const category = categories.find((c) => c.slug === slug)
