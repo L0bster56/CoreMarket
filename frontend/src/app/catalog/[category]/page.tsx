@@ -46,10 +46,9 @@ export async function generateMetadata({ params }: PageProps) {
 export async function generateStaticParams() {
   try {
     const categories = await serverGet<Category[]>('/categories', false)
-    const params = categories.map((c) => ({ category: c.slug }))
-    return params.length > 0 ? params : [{ category: '_' }]
+    return categories.map((c) => ({ category: c.slug }))
   } catch {
-    return [{ category: '_' }]
+    return []
   }
 }
 

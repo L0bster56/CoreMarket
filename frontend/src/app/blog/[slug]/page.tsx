@@ -133,10 +133,9 @@ export async function generateStaticParams() {
       '/blog/posts?post_status=published&limit=200',
       false,
     )
-    const params = resp.items.map((p) => ({ slug: p.slug }))
-    return params.length > 0 ? params : [{ slug: '_' }]
+    return resp.items.map((p) => ({ slug: p.slug }))
   } catch {
-    return [{ slug: '_' }]
+    return []
   }
 }
 
