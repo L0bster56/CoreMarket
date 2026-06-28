@@ -1,8 +1,6 @@
 import { cacheLife, cacheTag } from 'next/cache'
 import { notFound } from 'next/navigation'
 import { serverGet } from '@/lib/server-fetch'
-
-export const dynamic = 'force-dynamic'
 import { serverGetPresignedUrls } from '@/services/storage.server'
 import type { Category, ApiItemListResponse, Item } from '@/types'
 import ItemCard from '@/components/ui/ItemCard'

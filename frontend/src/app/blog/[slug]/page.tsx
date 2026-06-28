@@ -3,8 +3,6 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { serverGet } from '@/lib/server-fetch'
-
-export const dynamic = 'force-dynamic'
 import { serverGetPresignedUrls } from '@/services/storage.server'
 import MarkdownContent from '@/components/ui/MarkdownContent'
 import type { BlogPost, ApiItemDetail, ApiItemListEntry, ApiItemListResponse, Category } from '@/types'
