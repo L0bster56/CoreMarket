@@ -103,15 +103,24 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      # Non-SSL mode (default): replaces nginx default.conf
+      # STEP 1 — before cert: use HTTP-only config
       - ./nginx/conf.d/coremarket.conf:/etc/nginx/conf.d/default.conf:ro
-      # SSL mode: comment the line above, uncomment the two lines below
+      # STEP 2 — after cert obtained: comment line above, uncomment two lines below, restart nginx
       # - ./nginx/conf.d/coremarket-ssl.conf:/etc/nginx/conf.d/default.conf:ro
       # - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
       - frontend
+    networks:
+      - coremarket
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done;"
     networks:
       - coremarket
 
