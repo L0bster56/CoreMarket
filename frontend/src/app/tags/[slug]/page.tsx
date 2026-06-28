@@ -2,6 +2,8 @@ import { cacheLife, cacheTag } from 'next/cache'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { serverGet } from '@/lib/server-fetch'
+
+export const dynamic = 'force-dynamic'
 import { serverGetPresignedUrls } from '@/services/storage.server'
 import type { Tag, ApiItemListResponse, Item } from '@/types'
 import ItemCard from '@/components/ui/ItemCard'
@@ -39,21 +41,10 @@ export async function generateMetadata({ params }: PageProps) {
   }
 }
 
-// Pre-build all tag pages at deployment time.
-export async function generateStaticParams() {
-  try {
-    const tags = await serverGet<Tag[]>('/tags', false)
-    return tags.map((t) => ({ slug: t.slug }))
-  } catch {
-    return [{ slug: '__build__' }]
-  }
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default async function TagPage({ params }: PageProps) {
   const { slug } = await params
-  if (slug === '__build__') notFound()
 
   const [tags, itemsResp] = await Promise.all([
     getAllTags(),

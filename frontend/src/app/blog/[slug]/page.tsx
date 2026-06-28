@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { serverGet } from '@/lib/server-fetch'
+
+export const dynamic = 'force-dynamic'
 import { serverGetPresignedUrls } from '@/services/storage.server'
 import MarkdownContent from '@/components/ui/MarkdownContent'
 import type { BlogPost, ApiItemDetail, ApiItemListEntry, ApiItemListResponse, Category } from '@/types'
@@ -126,18 +128,6 @@ export async function generateMetadata({ params }: PageProps) {
   }
 }
 
-// Pre-build all published blog posts at deployment time.
-export async function generateStaticParams() {
-  try {
-    const resp = await serverGet<{ items: { slug: string }[] }>(
-      '/blog/posts?post_status=published&limit=200',
-      false,
-    )
-    return resp.items.map((p) => ({ slug: p.slug }))
-  } catch {
-    return [{ slug: '__build__' }]
-  }
-}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })

@@ -1,6 +1,8 @@
 import { cacheLife, cacheTag } from 'next/cache'
 import { notFound } from 'next/navigation'
 import { serverGet } from '@/lib/server-fetch'
+
+export const dynamic = 'force-dynamic'
 import { serverGetPresignedUrls } from '@/services/storage.server'
 import type { Category, ApiItemListResponse, Item } from '@/types'
 import ItemCard from '@/components/ui/ItemCard'
@@ -42,21 +44,10 @@ export async function generateMetadata({ params }: PageProps) {
   }
 }
 
-// Pre-build all category pages at deployment time.
-export async function generateStaticParams() {
-  try {
-    const categories = await serverGet<Category[]>('/categories', false)
-    return categories.map((c) => ({ category: c.slug }))
-  } catch {
-    return [{ category: '__build__' }]
-  }
-}
-
 // ─── Page ────────────────────────────────────────────────────────────────────
 
 export default async function CategoryPage({ params }: PageProps) {
   const { category: slug } = await params
-  if (slug === '__build__') notFound()
 
   const categories = await getAllCategories()
   const category = categories.find((c) => c.slug === slug)
