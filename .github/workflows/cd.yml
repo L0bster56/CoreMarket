@@ -101,12 +101,17 @@ jobs:
     environment: production
 
     steps:
+      - name: Decode SSH key
+        run: |
+          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" | base64 --decode > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+
       - name: SSH Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VM_HOST }}
           username: ${{ secrets.VM_USER }}
-          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          key_path: /tmp/deploy_key
           command_timeout: 15m
           script: |
             set -e
