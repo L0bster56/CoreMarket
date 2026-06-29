@@ -1,0 +1,17 @@
+# docker-compose.gcp.yml
+#
+# CI/CD overlay: заменяет build: на готовые образы из DockerHub.
+# Используется только при автоматическом деплое через GitHub Actions.
+#
+# Вручную на VM:
+#   export IMAGE_BACKEND=username/coremarket-backend:<sha>
+#   export IMAGE_FRONTEND=username/coremarket-frontend:<sha>
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.gcp.yml pull backend frontend
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.gcp.yml up -d --no-build
+
+services:
+  backend:
+    image: ${IMAGE_BACKEND:?IMAGE_BACKEND is not set}
+
+  frontend:
+    image: ${IMAGE_FRONTEND:?IMAGE_FRONTEND is not set}

@@ -1,0 +1,80 @@
+name: Rollback — Deploy specific image tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Git SHA или тег для отката (например: abc1234 или latest)"
+        required: true
+        type: string
+      reason:
+        description: "Причина отката"
+        required: false
+        default: "manual rollback"
+        type: string
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  IMAGE_BACKEND: ${{ secrets.DOCKERHUB_USERNAME }}/coremarket-backend
+  IMAGE_FRONTEND: ${{ secrets.DOCKERHUB_USERNAME }}/coremarket-frontend
+
+jobs:
+  rollback:
+    name: Rollback to ${{ github.event.inputs.image_tag }}
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: SSH Rollback
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          command_timeout: 15m
+          script: |
+            set -e
+            cd ~/CoreMarket
+
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
+              docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+            export IMAGE_BACKEND="${{ env.IMAGE_BACKEND }}:${{ github.event.inputs.image_tag }}"
+            export IMAGE_FRONTEND="${{ env.IMAGE_FRONTEND }}:${{ github.event.inputs.image_tag }}"
+
+            echo "Rolling back to: ${{ github.event.inputs.image_tag }}"
+
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              -f docker-compose.gcp.yml \
+              pull backend frontend
+
+            docker compose \
+              -f docker-compose.yml \
+              -f docker-compose.prod.yml \
+              -f docker-compose.gcp.yml \
+              up -d --no-build
+
+            echo "Rollback complete."
+
+      - name: Smoke test
+        run: |
+          sleep 25
+          curl --retry 8 --retry-delay 10 --retry-connrefused \
+            --retry-all-errors --max-time 15 \
+            -sf "${{ vars.PUBLIC_URL }}" -o /dev/null \
+            && echo "OK" || (echo "SITE DOWN AFTER ROLLBACK" && exit 1)
+
+      - name: Telegram notify
+        if: always()
+        run: |
+          EMOJI="✅"
+          [ "${{ job.status }}" = "failure" ] && EMOJI="🚨"
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="HTML" \
+            -d text="${EMOJI} <b>ROLLBACK ${{ job.status }}</b>%0ATag: <code>${{ github.event.inputs.image_tag }}</code>%0AПричина: ${{ github.event.inputs.reason }}%0AАвтор: ${{ github.actor }}"
