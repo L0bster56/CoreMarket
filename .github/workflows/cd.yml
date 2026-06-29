@@ -156,17 +156,19 @@ jobs:
 
       - name: Check frontend
         run: |
+          BASE_URL="http://$(echo '${{ secrets.VM_HOST }}' | tr -d '[:space:]')"
           curl --retry 8 --retry-delay 10 --retry-connrefused \
             --retry-all-errors --max-time 15 \
-            -sf "${{ vars.PUBLIC_URL }}" -o /dev/null \
+            -sf "${BASE_URL}" -o /dev/null \
             && echo "Frontend OK" \
             || (echo "Frontend FAILED" && exit 1)
 
       - name: Check backend API
         run: |
+          BASE_URL="http://$(echo '${{ secrets.VM_HOST }}' | tr -d '[:space:]')"
           curl --retry 5 --retry-delay 10 --retry-connrefused \
             --retry-all-errors --max-time 15 \
-            -sf "${{ vars.PUBLIC_URL }}/api/v1/items?limit=1" -o /dev/null \
+            -sf "${BASE_URL}/api/v1/items?limit=1" -o /dev/null \
             && echo "Backend API OK" \
             || (echo "Backend API FAILED" && exit 1)
 
