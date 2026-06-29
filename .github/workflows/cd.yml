@@ -134,10 +134,12 @@ jobs:
 
       - name: SSH Deploy
         run: |
-          ssh -v -i ~/.ssh/deploy_key \
+          VM_USER=$(echo "${{ secrets.VM_USER }}" | tr -d '[:space:]')
+          VM_HOST=$(echo "${{ secrets.VM_HOST }}" | tr -d '[:space:]')
+          ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=30 \
-            "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
+            "${VM_USER}@${VM_HOST}" \
             bash < /tmp/deploy.sh
 
   # ─────────────────────────────────────────────────────────────────

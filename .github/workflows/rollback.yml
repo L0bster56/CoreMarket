@@ -56,10 +56,12 @@ jobs:
 
       - name: SSH Rollback
         run: |
+          VM_USER=$(echo "${{ secrets.VM_USER }}" | tr -d '[:space:]')
+          VM_HOST=$(echo "${{ secrets.VM_HOST }}" | tr -d '[:space:]')
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=30 \
-            "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
+            "${VM_USER}@${VM_HOST}" \
             bash < /tmp/rollback.sh
 
       - name: Smoke test
