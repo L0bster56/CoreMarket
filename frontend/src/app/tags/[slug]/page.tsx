@@ -16,14 +16,14 @@ async function getAllTags(): Promise<Tag[]> {
   'use cache'
   cacheLife('hours')
   cacheTag('tags')
-  return serverGet<Tag[]>('/tags', false)
+  return serverGet<Tag[]>('/tags', 3600)
 }
 
 async function getItemsByTag(tagSlug: string): Promise<ApiItemListResponse> {
   'use cache'
   cacheLife('catalog')
   cacheTag('items', `tag-${tagSlug}`)
-  return serverGet<ApiItemListResponse>(`/items?tag=${tagSlug}&is_published=true`, false)
+  return serverGet<ApiItemListResponse>(`/items?tag=${tagSlug}&is_published=true`, 300)
 }
 
 // ─── SEO ─────────────────────────────────────────────────────────────────────

@@ -29,8 +29,8 @@ async function fetchSidebarData(): Promise<{ categories: Category[]; tags: Tag[]
   cacheTag('categories', 'tags')
 
   const [categories, tags] = await Promise.all([
-    serverGet<Category[]>('/categories', false),
-    serverGet<Tag[]>('/tags', false),
+    serverGet<Category[]>('/categories', 3600),
+    serverGet<Tag[]>('/tags', 3600),
   ])
   return { categories, tags }
 }

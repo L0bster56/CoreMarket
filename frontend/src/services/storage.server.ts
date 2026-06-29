@@ -17,7 +17,7 @@ async function fetchPresignedUrlsRemote(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ keys: sortedKeys, expires_in: 7200 }),
-    cache: 'no-store',
+    next: { revalidate: 2700 },
   })
   if (!res.ok) return {}
   const data = await res.json() as { urls: Record<string, string> }

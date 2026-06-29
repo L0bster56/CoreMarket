@@ -48,7 +48,7 @@ async function getBlogPost(slug: string): Promise<BlogPost> {
   'use cache'
   cacheLife('days')
   cacheTag('blog-posts', `blog-post-${slug}`)
-  return serverGet<BlogPost>(`/blog/posts/${slug}`, false)
+  return serverGet<BlogPost>(`/blog/posts/${slug}`, 86400)
 }
 
 async function getBlogPostProducts(
@@ -65,14 +65,14 @@ async function getBlogPostProducts(
       ? Promise.all(
           post.product_links
             .sort((a, b) => a.display_order - b.display_order)
-            .map((l) => serverGet<ApiItemDetail>(`/items/${l.product_id}`, false).catch(() => null)),
+            .map((l) => serverGet<ApiItemDetail>(`/items/${l.product_id}`, 3600).catch(() => null)),
         ).then((results) => results.filter(Boolean) as ApiItemDetail[])
       : Promise.resolve([] as ApiItemDetail[]),
 
     post.category?.id
       ? serverGet<ApiItemListResponse>(
           `/items?category_id=${post.category.id}&is_published=true&limit=20`,
-          false,
+          3600,
         )
           .then((res) =>
             res.items

@@ -16,7 +16,7 @@ async function getAllCategories(): Promise<Category[]> {
   'use cache'
   cacheLife('hours')
   cacheTag('categories')
-  return serverGet<Category[]>('/categories', false)
+  return serverGet<Category[]>('/categories', 3600)
 }
 
 async function getCategoryItems(categoryId: string): Promise<ApiItemListResponse> {
@@ -25,7 +25,7 @@ async function getCategoryItems(categoryId: string): Promise<ApiItemListResponse
   cacheTag('items', `category-${categoryId}`)
   return serverGet<ApiItemListResponse>(
     `/items?category_id=${categoryId}&is_published=true`,
-    false,
+    300,
   )
 }
 
