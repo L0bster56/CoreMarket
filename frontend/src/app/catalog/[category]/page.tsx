@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { cacheLife, cacheTag } from 'next/cache'
 import { notFound } from 'next/navigation'
 import { serverGet } from '@/lib/server-fetch'
