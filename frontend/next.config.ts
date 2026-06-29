@@ -14,8 +14,6 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
-
   cacheLife: {
     presigned: {
       stale: 300,
