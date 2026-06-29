@@ -129,9 +129,12 @@ jobs:
           echo "Deployed: ${IMG_TAG}"
           EOF
 
+      - name: Verify key fingerprint
+        run: ssh-keygen -l -f ~/.ssh/deploy_key
+
       - name: SSH Deploy
         run: |
-          ssh -i ~/.ssh/deploy_key \
+          ssh -v -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
             -o ConnectTimeout=30 \
             "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
