@@ -33,39 +33,34 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Create rollback script
+        env:
+          DH_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DH_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMG_BACKEND: ${{ env.IMAGE_BACKEND }}:${{ github.event.inputs.image_tag }}
+          IMG_FRONTEND: ${{ env.IMAGE_FRONTEND }}:${{ github.event.inputs.image_tag }}
+          IMG_TAG: ${{ github.event.inputs.image_tag }}
+        run: |
+          cat > /tmp/rollback.sh << EOF
+          set -e
+          cd ~/CoreMarket
+          echo "${DH_TOKEN}" | docker login -u "${DH_USER}" --password-stdin
+          export IMAGE_BACKEND="${IMG_BACKEND}"
+          export IMAGE_FRONTEND="${IMG_FRONTEND}"
+          echo "Rolling back to: ${IMG_TAG}"
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.gcp.yml pull backend frontend
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.gcp.yml up -d --no-build
+          echo "Rollback complete."
+          EOF
 
       - name: SSH Rollback
         run: |
           ssh -i ~/.ssh/deploy_key \
             -o StrictHostKeyChecking=no \
-            -o ServerAliveInterval=60 \
-            ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} bash << 'ENDSSH'
-          set -e
-          cd ~/CoreMarket
-
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
-            docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-          export IMAGE_BACKEND="${{ env.IMAGE_BACKEND }}:${{ github.event.inputs.image_tag }}"
-          export IMAGE_FRONTEND="${{ env.IMAGE_FRONTEND }}:${{ github.event.inputs.image_tag }}"
-
-          echo "Rolling back to: ${{ github.event.inputs.image_tag }}"
-
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose.prod.yml \
-            -f docker-compose.gcp.yml \
-            pull backend frontend
-
-          docker compose \
-            -f docker-compose.yml \
-            -f docker-compose.prod.yml \
-            -f docker-compose.gcp.yml \
-            up -d --no-build
-
-          echo "Rollback complete."
-          ENDSSH
+            -o ConnectTimeout=30 \
+            "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
+            bash < /tmp/rollback.sh
 
       - name: Smoke test
         run: |
