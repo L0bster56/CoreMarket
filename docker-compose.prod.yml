@@ -106,11 +106,9 @@ services:
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      # STEP 1 — before cert: use HTTP-only config
-      - ./nginx/conf.d/coremarket.conf:/etc/nginx/conf.d/default.conf:ro
-      # STEP 2 — after cert obtained: comment line above, uncomment two lines below, restart nginx
-      # - ./nginx/conf.d/coremarket-ssl.conf:/etc/nginx/conf.d/default.conf:ro
-      # - ./certbot/conf:/etc/letsencrypt:ro
+      # SSL config (cert obtained via certbot)
+      - ./nginx/conf.d/coremarket-ssl.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
