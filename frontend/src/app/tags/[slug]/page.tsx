@@ -1,4 +1,3 @@
-import { cacheLife, cacheTag } from 'next/cache'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { serverGet } from '@/lib/server-fetch'
@@ -13,16 +12,10 @@ interface PageProps {
 // ─── Cached data fetchers ────────────────────────────────────────────────────
 
 async function getAllTags(): Promise<Tag[]> {
-  'use cache'
-  cacheLife('hours')
-  cacheTag('tags')
   return serverGet<Tag[]>('/tags', 3600)
 }
 
 async function getItemsByTag(tagSlug: string): Promise<ApiItemListResponse> {
-  'use cache'
-  cacheLife('catalog')
-  cacheTag('items', `tag-${tagSlug}`)
   return serverGet<ApiItemListResponse>(`/items?tag=${tagSlug}&is_published=true`, 300)
 }
 

@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import path from "path";
 
 const securityHeaders = [
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
@@ -14,23 +13,6 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  cacheLife: {
-    presigned: {
-      stale: 300,
-      revalidate: 2700,
-      expire: 3300,
-    },
-    catalog: {
-      stale: 60,
-      revalidate: 300,
-      expire: 3600,
-    },
-  },
-
-  cacheHandlers: {
-    remote: path.resolve('./cache-handlers/redis-handler.js'),
-  },
-
   poweredByHeader: false,
   compress: true,
 

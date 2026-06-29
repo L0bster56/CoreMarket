@@ -1,4 +1,3 @@
-import { cacheLife, cacheTag } from 'next/cache'
 import { notFound } from 'next/navigation'
 import { serverGet } from '@/lib/server-fetch'
 import { serverGetPresignedUrls } from '@/services/storage.server'
@@ -13,16 +12,10 @@ interface PageProps {
 // ─── Cached data fetchers ────────────────────────────────────────────────────
 
 async function getAllCategories(): Promise<Category[]> {
-  'use cache'
-  cacheLife('hours')
-  cacheTag('categories')
   return serverGet<Category[]>('/categories', 3600)
 }
 
 async function getCategoryItems(categoryId: string): Promise<ApiItemListResponse> {
-  'use cache'
-  cacheLife('catalog')
-  cacheTag('items', `category-${categoryId}`)
   return serverGet<ApiItemListResponse>(
     `/items?category_id=${categoryId}&is_published=true`,
     300,

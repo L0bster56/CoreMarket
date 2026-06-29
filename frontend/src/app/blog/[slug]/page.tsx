@@ -1,4 +1,3 @@
-import { cacheLife, cacheTag } from 'next/cache'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -45,18 +44,12 @@ function CompactItemCard({ item }: { item: CompactItem }) {
 // 'days' profile: stale 5min, revalidate 1 day, expire 1 week.
 
 async function getBlogPost(slug: string): Promise<BlogPost> {
-  'use cache'
-  cacheLife('days')
-  cacheTag('blog-posts', `blog-post-${slug}`)
   return serverGet<BlogPost>(`/blog/posts/${slug}`, 86400)
 }
 
 async function getBlogPostProducts(
   post: BlogPost,
 ): Promise<{ productItems: ApiItemDetail[]; categoryItems: ApiItemListEntry[] }> {
-  'use cache'
-  cacheLife('hours')
-  cacheTag('items', `blog-post-products-${post.slug}`)
 
   const linkedProductIds = new Set(post.product_links.map((l) => l.product_id))
 

@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { cacheLife, cacheTag } from 'next/cache'
 import Link from 'next/link'
 import { serverGet } from '@/lib/server-fetch'
 import { serverGetPresignedUrls } from '@/services/storage.server'
@@ -24,10 +23,6 @@ const PAGE_SIZE = 12
 // ─── Cached sidebar data (stable key — no filter props) ──────────────────────
 
 async function fetchBlogSidebarData(): Promise<{ categories: Category[]; tags: BlogTag[] }> {
-  'use cache'
-  cacheLife('hours')
-  cacheTag('categories', 'blog-tags')
-
   const [categories, tags] = await Promise.all([
     serverGet<Category[]>('/categories', 3600),
     serverGet<BlogTag[]>('/blog/tags', 3600),

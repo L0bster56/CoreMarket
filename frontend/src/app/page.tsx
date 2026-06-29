@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { cacheLife, cacheTag } from 'next/cache'
 import Link from 'next/link'
 import { serverGet } from '@/lib/server-fetch'
 import { serverGetPresignedUrls } from '@/services/storage.server'
@@ -50,10 +49,6 @@ const ArrowRight = () => (
 // ─── Cached: Hero badge count (revalidates every 30min) ─────────────────────
 
 async function HeroBadge() {
-  'use cache'
-  cacheLife({ stale: 300, revalidate: 1800, expire: 86400 })
-  cacheTag('items', 'catalog-stats')
-
   const resp = await serverGet<{ total: number }>('/items?limit=1&is_published=true', 1800)
   const total = resp.total
 
@@ -68,10 +63,6 @@ async function HeroBadge() {
 // ─── Cached: Categories section (revalidates every 1hr) ─────────────────────
 
 async function CategoriesSection() {
-  'use cache'
-  cacheLife('hours')
-  cacheTag('categories')
-
   const categories = await serverGet<Category[]>('/categories', 3600)
 
   if (categories.length === 0) return null
@@ -104,10 +95,6 @@ async function CategoriesSection() {
 // Presigned URLs come from 'use cache: remote' inside serverGetPresignedUrls.
 
 async function TrendingSection() {
-  'use cache'
-  cacheLife('catalog')
-  cacheTag('items', 'trending')
-
   const [categories, itemsResp] = await Promise.all([
     serverGet<Category[]>('/categories', 300),
     serverGet<ApiItemListResponse>('/items?limit=20&is_published=true', 300),
@@ -171,10 +158,6 @@ async function TrendingSection() {
 // ─── Cached: Blog preview (revalidates every 1hr) ───────────────────────────
 
 async function BlogPreviewSection() {
-  'use cache'
-  cacheLife('hours')
-  cacheTag('blog-posts', 'categories')
-
   const [categories, blogResp] = await Promise.all([
     serverGet<Category[]>('/categories', 3600),
     serverGet<BlogListResponse>('/blog/posts?post_status=published&limit=3', 3600)

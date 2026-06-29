@@ -80,7 +80,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
-          dockerfile: ./frontend/Dockerfile.prod
           push: true
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.PUBLIC_URL }}/api/v1

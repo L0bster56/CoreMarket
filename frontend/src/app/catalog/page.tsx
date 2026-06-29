@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { cacheLife, cacheTag } from 'next/cache'
 import { serverGet } from '@/lib/server-fetch'
 import { serverGetPresignedUrls } from '@/services/storage.server'
 import type { Category, Tag, ApiItemListResponse, Item } from '@/types'
@@ -24,10 +23,6 @@ export const metadata = { title: 'Каталог' }
 // ─── Cached sidebar data (stable key — no filter props) ──────────────────────
 
 async function fetchSidebarData(): Promise<{ categories: Category[]; tags: Tag[] }> {
-  'use cache'
-  cacheLife('hours')
-  cacheTag('categories', 'tags')
-
   const [categories, tags] = await Promise.all([
     serverGet<Category[]>('/categories', 3600),
     serverGet<Tag[]>('/tags', 3600),

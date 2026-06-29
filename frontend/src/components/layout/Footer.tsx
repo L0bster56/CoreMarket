@@ -1,9 +1,6 @@
-import { cacheLife } from 'next/cache'
 import Link from 'next/link'
 
-export default async function Footer() {
-  'use cache'
-  cacheLife({ revalidate: 86400, expire: 86400 * 365 })
+export default function Footer() {
   return (
     <footer className="bg-[#031E36] text-gray-400 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
