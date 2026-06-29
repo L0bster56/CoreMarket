@@ -92,6 +92,7 @@ services:
     environment:
       INTERNAL_API_URL: http://backend:8000/api/v1
       NEXT_TELEMETRY_DISABLED: "1"
+    volumes: !reset []
     depends_on:
       backend:
         condition: service_healthy
