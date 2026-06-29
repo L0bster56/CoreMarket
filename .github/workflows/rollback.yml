@@ -28,43 +28,44 @@ jobs:
     environment: production
 
     steps:
-      - name: Decode SSH key
+      - name: Setup SSH key
         run: |
-          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" | base64 --decode > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VM_SSH_PRIVATE_KEY }}" | base64 --decode > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VM_HOST }} >> ~/.ssh/known_hosts
 
       - name: SSH Rollback
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VM_HOST }}
-          username: ${{ secrets.VM_USER }}
-          key_path: /tmp/deploy_key
-          command_timeout: 15m
-          script: |
-            set -e
-            cd ~/CoreMarket
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o ServerAliveInterval=60 \
+            ${{ secrets.VM_USER }}@${{ secrets.VM_HOST }} bash << 'ENDSSH'
+          set -e
+          cd ~/CoreMarket
 
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
-              docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
+            docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-            export IMAGE_BACKEND="${{ env.IMAGE_BACKEND }}:${{ github.event.inputs.image_tag }}"
-            export IMAGE_FRONTEND="${{ env.IMAGE_FRONTEND }}:${{ github.event.inputs.image_tag }}"
+          export IMAGE_BACKEND="${{ env.IMAGE_BACKEND }}:${{ github.event.inputs.image_tag }}"
+          export IMAGE_FRONTEND="${{ env.IMAGE_FRONTEND }}:${{ github.event.inputs.image_tag }}"
 
-            echo "Rolling back to: ${{ github.event.inputs.image_tag }}"
+          echo "Rolling back to: ${{ github.event.inputs.image_tag }}"
 
-            docker compose \
-              -f docker-compose.yml \
-              -f docker-compose.prod.yml \
-              -f docker-compose.gcp.yml \
-              pull backend frontend
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.prod.yml \
+            -f docker-compose.gcp.yml \
+            pull backend frontend
 
-            docker compose \
-              -f docker-compose.yml \
-              -f docker-compose.prod.yml \
-              -f docker-compose.gcp.yml \
-              up -d --no-build
+          docker compose \
+            -f docker-compose.yml \
+            -f docker-compose.prod.yml \
+            -f docker-compose.gcp.yml \
+            up -d --no-build
 
-            echo "Rollback complete."
+          echo "Rollback complete."
+          ENDSSH
 
       - name: Smoke test
         run: |
