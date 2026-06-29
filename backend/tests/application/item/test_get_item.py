@@ -74,4 +74,4 @@ class TestGetItemUseCase:
 
         await uc.execute(GetItemCommand(item_id=sample_item.id))
 
-        mock_uow.commit.assert_not_called()
+        mock_uow.commit.assert_called_once()

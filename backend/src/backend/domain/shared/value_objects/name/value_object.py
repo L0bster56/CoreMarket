@@ -13,7 +13,7 @@ class Name:
             raise InvalidNameError()
 
     def _is_valid(self) -> bool:
-        pattern = r"^[A-Za-zА-ЯЁа-яё0-9 \-'\"«»&.,;:()/+%#@!?]{2,200}$"
+        pattern = r"^[A-Za-zА-ЯЁа-яё0-9 '\"«»&.,;:()/+%#]{2,100}$"
         return re.match(pattern, self.value) is not None
 
     def __str__(self):
