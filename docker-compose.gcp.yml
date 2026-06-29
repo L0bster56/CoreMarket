@@ -12,6 +12,8 @@
 services:
   backend:
     image: ${IMAGE_BACKEND:?IMAGE_BACKEND is not set}
+    environment:
+      MINIO_PUBLIC_URL: https://sanjaranvarov.uz
 
   frontend:
     image: ${IMAGE_FRONTEND:?IMAGE_FRONTEND is not set}
