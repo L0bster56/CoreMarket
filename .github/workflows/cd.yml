@@ -84,7 +84,7 @@ jobs:
           push: true
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.PUBLIC_URL }}/api/v1
-            INTERNAL_API_URL=http://backend:8000/api/v1
+            INTERNAL_API_URL=https://sanjaranvarov.uz/api/v1
           tags: |
             ${{ env.IMAGE_FRONTEND }}:${{ steps.tag.outputs.tag }}
             ${{ env.IMAGE_FRONTEND }}:latest

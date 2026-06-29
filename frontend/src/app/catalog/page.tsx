@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { Suspense } from 'react'
 import { cacheLife, cacheTag } from 'next/cache'
 import { serverGet } from '@/lib/server-fetch'

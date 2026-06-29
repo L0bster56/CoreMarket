@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic'
-
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
