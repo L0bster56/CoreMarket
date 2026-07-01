@@ -9,8 +9,9 @@ CoreMarket/
 ├── nginx/
 │   ├── nginx.conf
 │   └── conf.d/
-│       ├── coremarket.conf      ← HTTP (dev/prod без SSL)
-│       └── coremarket-ssl.conf  ← HTTPS (prod с SSL)
+│       ├── http/coremarket.conf      ← HTTP (dev/prod без SSL)
+│       └── ssl/coremarket-ssl.conf   ← HTTPS (prod с SSL), монтируется как папка
+│                                        (не файл) — иначе git pull не подхватится
 ├── prometheus/
 │   └── prometheus.yml           ← scrape configs: backend, exporters
 ├── tempo/

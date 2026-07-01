@@ -145,7 +145,11 @@ TELEGRAM_ALERTS_ENABLED=false
 
 ## Nginx
 
-### HTTP (dev/prod без SSL): `nginx/conf.d/coremarket.conf`
+Оба варианта конфига — альтернативы: монтируется **одна** из папок целиком как `/etc/nginx/conf.d`
+(директорией, не отдельным файлом — иначе `git pull`, который заменяет файл через rename,
+не подхватится в уже запущенном контейнере без `--force-recreate`).
+
+### HTTP (dev/prod без SSL): `nginx/conf.d/http/coremarket.conf`
 
 ```
 location /api/   → proxy_pass http://backend:8000
@@ -155,16 +159,22 @@ location /       → proxy_pass http://frontend:3000
 Включены security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`),
 кэш для статики (`expires 30d`), `client_max_body_size 10m`.
 
-### HTTPS (prod с SSL): `nginx/conf.d/coremarket-ssl.conf`
+### HTTPS (prod с SSL): `nginx/conf.d/ssl/coremarket-ssl.conf`
 
 - `listen 443 ssl http2`
-- HTTP → HTTPS редирект (301)
+- HTTP → HTTPS редирект (301) для доменов; для запросов по голому IP сервера (несовпавший `Host`) —
+  отдельный `default_server` на порту 80, проксирующий `/grafana/` на Grafana (доступ к дашбордам не по домену)
 - HSTS: `max-age=31536000; includeSubDomains`
 - TLS 1.2/1.3
 
 Сертификат: Let's Encrypt через `scripts/init-letsencrypt.sh`.
 
-Для включения SSL: в `docker-compose.prod.yml` раскомментировать строки с `coremarket-ssl.conf` и `certbot`.
+Для включения SSL: в `docker-compose.prod.yml` раскомментировать строки с `nginx/conf.d/ssl` и `certbot`.
+
+После правки любого файла в `nginx/conf.d/ssl/` на сервере — `git pull`, затем перечитать конфиг без даунтайма:
+```bash
+docker exec coremarket-nginx-1 nginx -t && docker exec coremarket-nginx-1 nginx -s reload
+```
 
 ---
 
@@ -224,7 +234,7 @@ docker compose exec backend python scripts/seeds/create_admin.py
 
 Grafana автоматически подключает datasources Loki, Prometheus, Tempo и загружает все 5 дашбордов через provisioning.
 
-**Production:** прямой порт `3001` у Grafana закрыт (`docker-compose.prod.yml` сбрасывает `ports`). Доступ — через nginx по **IP сервера** на `http://<server-ip>/grafana/`, а не по домену: `nginx/conf.d/coremarket-ssl.conf` содержит отдельный `server { listen 80 default_server; server_name _; }`, который проксирует запросы `/grafana/` с несовпавшим `Host` (в т.ч. голый IP) на `grafana:3000/grafana/`. Домены (`sanjaranvarov.uz`, `api.sanjaranvarov.uz`) по-прежнему обслуживаются доменными server-блоками и редиректятся на HTTPS.
+**Production:** прямой порт `3001` у Grafana закрыт (`docker-compose.prod.yml` сбрасывает `ports`). Доступ — через nginx по **IP сервера** на `http://<server-ip>/grafana/`, а не по домену: `nginx/conf.d/ssl/coremarket-ssl.conf` содержит отдельный `server { listen 80 default_server; server_name _; }`, который проксирует запросы `/grafana/` с несовпавшим `Host` (в т.ч. голый IP) на `grafana:3000/grafana/`. Домены (`sanjaranvarov.uz`, `api.sanjaranvarov.uz`) по-прежнему обслуживаются доменными server-блоками и редиректятся на HTTPS.
 
 Grafana запущена с `GF_SERVER_SERVE_FROM_SUB_PATH=true` и `GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL}` — переменную `GRAFANA_ROOT_URL` в `.env` на сервере нужно выставить в `http://<server-ip>/grafana/`, иначе статика/редиректы Grafana будут ломаться.
 

@@ -5,7 +5,7 @@
 #   bash scripts/init-letsencrypt.sh example.com admin@example.com [--staging]
 #
 # After success:
-#   1. Edit nginx/conf.d/coremarket-ssl.conf — replace YOUR_DOMAIN with your domain.
+#   1. Edit nginx/conf.d/ssl/coremarket-ssl.conf — replace YOUR_DOMAIN with your domain.
 #   2. Uncomment the SSL conf mount in docker-compose.prod.yml.
 #   3. docker compose -f docker-compose.prod.yml exec nginx nginx -s reload
 
@@ -42,7 +42,7 @@ echo ""
 echo "==> Certificate obtained at $CERTBOT_CONF/live/$DOMAIN/"
 echo ""
 echo "Next steps:"
-echo "  1. Replace YOUR_DOMAIN in nginx/conf.d/coremarket-ssl.conf with: $DOMAIN"
+echo "  1. Replace YOUR_DOMAIN in nginx/conf.d/ssl/coremarket-ssl.conf with: $DOMAIN"
 echo "  2. In docker-compose.prod.yml, swap the nginx conf.d mount to coremarket-ssl.conf"
 echo "  3. Restart: docker compose -f docker-compose.prod.yml up -d nginx"
 echo ""
