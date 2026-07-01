@@ -224,7 +224,9 @@ docker compose exec backend python scripts/seeds/create_admin.py
 
 Grafana автоматически подключает datasources Loki, Prometheus, Tempo и загружает все 5 дашбордов через provisioning.
 
-**Production:** прямой порт `3001` у Grafana закрыт (`docker-compose.prod.yml` сбрасывает `ports`). Доступ — через nginx по **IP сервера** на порту 80 (`http://<server-ip>/`), а не по домену: `nginx/conf.d/coremarket-ssl.conf` содержит отдельный `server { listen 80 default_server; server_name _; }`, который проксирует любой запрос с несовпавшим `Host` (в т.ч. голый IP) на `grafana:3000`. Домены (`sanjaranvarov.uz`, `api.sanjaranvarov.uz`) по-прежнему обслуживаются доменными server-блоками и редиректятся на HTTPS.
+**Production:** прямой порт `3001` у Grafana закрыт (`docker-compose.prod.yml` сбрасывает `ports`). Доступ — через nginx по **IP сервера** на `http://<server-ip>/grafana/`, а не по домену: `nginx/conf.d/coremarket-ssl.conf` содержит отдельный `server { listen 80 default_server; server_name _; }`, который проксирует запросы `/grafana/` с несовпавшим `Host` (в т.ч. голый IP) на `grafana:3000/grafana/`. Домены (`sanjaranvarov.uz`, `api.sanjaranvarov.uz`) по-прежнему обслуживаются доменными server-блоками и редиректятся на HTTPS.
+
+Grafana запущена с `GF_SERVER_SERVE_FROM_SUB_PATH=true` и `GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL}` — переменную `GRAFANA_ROOT_URL` в `.env` на сервере нужно выставить в `http://<server-ip>/grafana/`, иначе статика/редиректы Grafana будут ломаться.
 
 ---
 
@@ -271,6 +273,7 @@ Grafana автоматически подключает datasources Loki, Promet
 - [ ] Миграции применены (автоматически через entrypoint)
 - [ ] Admin-пользователь создан: `docker compose exec backend python scripts/seeds/create_admin.py`
 - [ ] Elasticsearch переиндексирован: `POST /api/v1/search/reindex`
-- [ ] Grafana открывается по `http://<server-ip>/` (порт 3001 наружу не открыт), дашборды загружены
+- [ ] `GRAFANA_ROOT_URL` в `.env` выставлен на `http://<server-ip>/grafana/`
+- [ ] Grafana открывается по `http://<server-ip>/grafana/` (порт 3001 наружу не открыт), дашборды загружены
 - [ ] Telegram alerts настроены (если используются): обновлён `chatid` в `contact_points.yml`
 - [ ] Log rotation включён (настроен в `docker-compose.yml` через `x-logging`)

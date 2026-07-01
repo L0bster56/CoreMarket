@@ -101,6 +101,9 @@ services:
 
   grafana:
     ports: !reset []
+    environment:
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost/grafana/}
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
     networks:
       - coremarket
 
