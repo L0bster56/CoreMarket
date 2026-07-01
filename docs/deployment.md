@@ -214,7 +214,7 @@ docker compose exec backend python scripts/seeds/create_admin.py
 
 ## Observability — доступ
 
-| Сервис     | URL                     | Логин/Пароль             |
+| Сервис     | URL (dev)               | Логин/Пароль             |
 |------------|-------------------------|--------------------------|
 | Grafana    | http://localhost:3001   | admin / `GRAFANA_ADMIN_PASSWORD` |
 | Prometheus | http://localhost:9090   | без авторизации           |
@@ -223,6 +223,8 @@ docker compose exec backend python scripts/seeds/create_admin.py
 | Tempo      | http://localhost:3200   | через Grafana datasource  |
 
 Grafana автоматически подключает datasources Loki, Prometheus, Tempo и загружает все 5 дашбордов через provisioning.
+
+**Production:** прямой порт `3001` у Grafana закрыт (`docker-compose.prod.yml` сбрасывает `ports`). Доступ — через nginx по **IP сервера** на порту 80 (`http://<server-ip>/`), а не по домену: `nginx/conf.d/coremarket-ssl.conf` содержит отдельный `server { listen 80 default_server; server_name _; }`, который проксирует любой запрос с несовпавшим `Host` (в т.ч. голый IP) на `grafana:3000`. Домены (`sanjaranvarov.uz`, `api.sanjaranvarov.uz`) по-прежнему обслуживаются доменными server-блоками и редиректятся на HTTPS.
 
 ---
 
@@ -269,6 +271,6 @@ Grafana автоматически подключает datasources Loki, Promet
 - [ ] Миграции применены (автоматически через entrypoint)
 - [ ] Admin-пользователь создан: `docker compose exec backend python scripts/seeds/create_admin.py`
 - [ ] Elasticsearch переиндексирован: `POST /api/v1/search/reindex`
-- [ ] Grafana открывается, дашборды загружены
+- [ ] Grafana открывается по `http://<server-ip>/` (порт 3001 наружу не открыт), дашборды загружены
 - [ ] Telegram alerts настроены (если используются): обновлён `chatid` в `contact_points.yml`
 - [ ] Log rotation включён (настроен в `docker-compose.yml` через `x-logging`)

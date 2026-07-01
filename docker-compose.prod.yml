@@ -99,6 +99,11 @@ services:
     networks:
       - coremarket
 
+  grafana:
+    ports: !reset []
+    networks:
+      - coremarket
+
   nginx:
     image: nginx:1.27-alpine
     ports:
@@ -113,6 +118,7 @@ services:
     depends_on:
       - backend
       - frontend
+      - grafana
     networks:
       - coremarket
 
